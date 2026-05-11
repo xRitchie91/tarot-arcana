@@ -7,33 +7,31 @@ export default function Home() {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [mode, setMode] = useState<"random" | "ai">("random");
 
   async function drawCards() {
     setLoading(true);
     setResult(null);
 
-    try {
-      const res = await fetch("/api/reading", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-      });
+    const res = await fetch("/api/reading", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question,
+        mode,
+      }),
+    });
 
-      const data = await res.json();
-      setResult(data);
-    } catch (err) {
-      console.error(err);
-    }
-
+    const data = await res.json();
+    setResult(data);
     setLoading(false);
   }
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-zinc-900 to-black text-white px-6">
-      
+
       <div className="w-full max-w-2xl text-center space-y-8">
-        
-        {/* Header */}
+
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -45,6 +43,27 @@ export default function Home() {
         <p className="text-zinc-400">
           Ask a question and let the cards reflect your path.
         </p>
+
+        {/* Mode Toggle */}
+        <div className="flex gap-2 justify-center">
+          <button
+            onClick={() => setMode("random")}
+            className={`px-4 py-2 rounded-lg ${
+              mode === "random" ? "bg-purple-600" : "bg-zinc-800"
+            }`}
+          >
+            Random Cards
+          </button>
+
+          <button
+            onClick={() => setMode("ai")}
+            className={`px-4 py-2 rounded-lg ${
+              mode === "ai" ? "bg-purple-600" : "bg-zinc-800"
+            }`}
+          >
+            AI Reader
+          </button>
+        </div>
 
         {/* Input */}
         <div className="space-y-4">
@@ -73,16 +92,19 @@ export default function Home() {
           >
             <h2 className="text-xl font-medium">Your Reading</h2>
 
-            <div className="text-sm text-zinc-300">
+            <div className="text-sm text-zinc-300 whitespace-pre-line">
               {result.interpretation}
             </div>
 
             <div className="text-xs text-zinc-500 mt-4">
               Cards drawn:
-              <pre className="mt-2">{JSON.stringify(result.cards, null, 2)}</pre>
+              <pre className="mt-2">
+                {JSON.stringify(result.cards, null, 2)}
+              </pre>
             </div>
           </motion.div>
         )}
+
       </div>
     </main>
   );
