@@ -8,76 +8,91 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [mode, setMode] = useState<"random" | "ai">("random");
+  const [revealed, setRevealed] = useState(false);
 
   async function drawCards() {
     setLoading(true);
     setResult(null);
+    setRevealed(false);
 
     const res = await fetch("/api/reading", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        question,
-        mode,
-      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ question, mode }),
     });
 
     const data = await res.json();
+
     setResult(data);
     setLoading(false);
+
+    setTimeout(() => {
+      setRevealed(true);
+    }, 800);
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-zinc-900 to-black text-white px-6">
+    <main className="min-h-screen relative overflow-hidden bg-black text-white flex items-center justify-center px-6">
 
-      <div className="w-full max-w-2xl text-center space-y-8">
+      {/* Background Glow */}
+      <div className="absolute w-[500px] h-[500px] bg-purple-700/20 blur-3xl rounded-full top-10 left-10 animate-pulse" />
+      <div className="absolute w-[400px] h-[400px] bg-indigo-600/20 blur-3xl rounded-full bottom-10 right-10 animate-pulse" />
 
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-5xl font-light tracking-wide"
-        >
-          Tarot Arcana
-        </motion.h1>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 w-full max-w-2xl rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 shadow-2xl space-y-8"
+      >
+        {/* Header */}
+        <div className="text-center space-y-3">
+          <h1 className="text-5xl font-light tracking-[0.25em] uppercase">
+            Tarot Arcana
+          </h1>
+          <p className="text-zinc-400 text-sm tracking-wide">
+            Seek clarity. Reveal patterns. Consult the unseen.
+          </p>
+        </div>
 
-        <p className="text-zinc-400">
-          Ask a question and let the cards reflect your path.
-        </p>
-
-        {/* Mode Toggle */}
-        <div className="flex gap-2 justify-center">
+        {/* Toggle */}
+        <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => setMode("random")}
-            className={`px-4 py-2 rounded-lg ${
-              mode === "random" ? "bg-purple-600" : "bg-zinc-800"
+            className={`py-3 rounded-xl transition ${
+              mode === "random"
+                ? "bg-purple-600 shadow-lg"
+                : "bg-zinc-900 hover:bg-zinc-800"
             }`}
           >
             Random Cards
           </button>
-
           <button
             onClick={() => setMode("ai")}
-            className={`px-4 py-2 rounded-lg ${
-              mode === "ai" ? "bg-purple-600" : "bg-zinc-800"
+            className={`py-3 rounded-xl transition ${
+              mode === "ai"
+                ? "bg-purple-600 shadow-lg"
+                : "bg-zinc-900 hover:bg-zinc-800"
             }`}
           >
-            AI Reader
+            AI Reader <br></br>
+            (Coming Soon...)
           </button>
         </div>
 
         {/* Input */}
         <div className="space-y-4">
-          <input
+          <textarea
+            rows={3}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="What do you want clarity on?"
-            className="w-full p-4 rounded-xl bg-zinc-800/50 border border-zinc-700 outline-none"
+            placeholder="What guidance do you seek?"
+            className="w-full rounded-2xl bg-black/40 border border-white/10 p-4 resize-none outline-none focus:border-purple-500"
           />
-
           <button
             onClick={drawCards}
             disabled={!question || loading}
-            className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition disabled:opacity-40"
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 transition disabled:opacity-40 font-medium tracking-wide"
           >
             {loading ? "Consulting the cards..." : "Draw Cards"}
           </button>
@@ -88,24 +103,63 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-10 space-y-4 text-left bg-zinc-900/60 p-6 rounded-xl border border-zinc-800"
+            className="rounded-2xl border border-white/10 bg-black/40 p-6 space-y-6"
           >
-            <h2 className="text-xl font-medium">Your Reading</h2>
+            <h2 className="text-xl tracking-wide text-purple-300">
+              Your Reading
+            </h2>
 
-            <div className="text-sm text-zinc-300 whitespace-pre-line">
-              {result.interpretation}
+            {/* Animated Cards */}
+            <div className="grid grid-cols-3 gap-3">
+              {result.cards.map((card: string, index: number) => (
+                <div
+                  key={index}
+                  style={{ perspective: 1000 }}
+                  className="h-40"
+                >
+                  <motion.div
+                    initial={{ rotateY: 180 }}
+                    animate={{ rotateY: revealed ? 0 : 180 }}
+                    transition={{ delay: index * 0.4, duration: 0.8 }}
+                    style={{
+                      transformStyle: "preserve-3d",
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
+                    {/* Back face (✦) — starts facing user, rotates away */}
+                    <div
+                      style={{
+                        backfaceVisibility: "hidden",
+                        transform: "rotateY(180deg)",
+                      }}
+                      className="absolute inset-0 rounded-2xl bg-gradient-to-b from-zinc-800 to-black border border-purple-500/30 flex items-center justify-center"
+                    >
+                      <span className="text-purple-300 text-xl">✦</span>
+                    </div>
+
+                    {/* Front face (card name) — hidden until flipped */}
+                    <div
+                      style={{ backfaceVisibility: "hidden" }}
+                      className="absolute inset-0 rounded-2xl bg-gradient-to-b from-zinc-800 to-black border border-purple-500/30 flex items-center justify-center text-center p-3"
+                    >
+                      <span className="text-sm tracking-wide text-purple-200">
+                        {card}
+                      </span>
+                    </div>
+                  </motion.div>
+                </div>
+              ))}
             </div>
 
-            <div className="text-xs text-zinc-500 mt-4">
-              Cards drawn:
-              <pre className="mt-2">
-                {JSON.stringify(result.cards, null, 2)}
-              </pre>
+            {/* Reading Text */}
+            <div className="text-zinc-300 whitespace-pre-line leading-relaxed">
+              {result.interpretation}
             </div>
           </motion.div>
         )}
-
-      </div>
+      </motion.div>
     </main>
   );
 }
